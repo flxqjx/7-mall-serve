@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.DashBoardDao">
+
+    <select id="homeOrderSummaryTrend" resultType="com.xyhc.cms.vo.infra.DashBoardVo">
+        SELECT tt.fKey as fKey,SUM(tt.tCount) as tCount FROM (
+        SELECT DATE_FORMAT(create_time,'%Y-%m-%d') as fKey,COUNT(1) as tCount FROM commodity_order GROUP BY DATE_FORMAT(create_time,'%Y-%m-%d')
+
+        )tt  GROUP BY tt.fKey
+
+    </select>
+
+    <select id="homeOrderSummaryPie" resultType="com.xyhc.cms.vo.infra.DashBoardVo">
+        SELECT *from (  SELECT b.commodity_name as fKey,SUM(tt.tCount) as tCount FROM (
+        SELECT commodity_id ,COUNT(1) as tCount FROM commodity_order_commodity GROUP BY DATE_FORMAT(create_time,'%Y-%m-%d')
+        )tt
+        INNER JOIN commodity b on tt.commodity_id=b.id
+
+        GROUP BY tt.commodity_id  )t ORDER BY tCount desc  LIMIT 10
+
+
+    </select>
+
+    <select id="allOrder" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT total FROM commodity_order where 1=1 and is_pay=1 and order_status!='REFUNDED'
+        <if test="params.startTime!= null and params.startTime !=''">
+            and pay_time >= #{params.startTime}
+        </if>
+        <if test="params.endTime!= null and params.endTime !=''">
+            and #{params.endTime} >= pay_time
+        </if>
+    </select>
+    <select id="monthOrder" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+       SELECT * FROM commodity_order where DATE_FORMAT(pay_time,'%Y-%m')=DATE_FORMAT(NOW(),'%Y-%m') and is_pay=1 and order_status!='REFUNDED'
+    </select>
+    <select id="todayOrder" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+       SELECT * FROM commodity_order where DATE_FORMAT(pay_time,'%Y-%m-%d')=DATE_FORMAT(NOW(),'%Y-%m-%d') and is_pay=1 and order_status!='REFUNDED'
+    </select>
+
+
+    <select id="allUser" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT 1
+        FROM wechat T
+        where 1=1
+    </select>
+    <select id="dayUser" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT *
+        FROM wechat T
+        where 1=1  and DATE_FORMAT(create_time,'%Y-%m-%d')=DATE_FORMAT(NOW(),'%Y-%m-%d')
+    </select>
+
+    <select id="monthUser" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT *
+        FROM wechat T
+        where 1=1  and DATE_FORMAT(create_time,'%Y-%m')=DATE_FORMAT(NOW(),'%Y-%m')
+    </select>
+
+
+    <select id="allUserLevel" resultType="com.xyhc.cms.entity.MemberLevelOrderEntity">
+        SELECT 1
+        FROM member_level_order T
+        where 1=1 and is_pay=1
+            and T.is_delete=0
+    </select>
+    <select id="dayUserLevel" resultType="com.xyhc.cms.entity.MemberLevelOrderEntity">
+        SELECT *
+        FROM member_level_order T
+        where 1=1  and DATE_FORMAT(pay_time,'%Y-%m-%d')=DATE_FORMAT(NOW(),'%Y-%m-%d') AND T.is_pay=1
+            and T.is_delete=0
+    </select>
+
+    <select id="dayUserLevelPage" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT W.*,
+        M.name as memberLevel,
+        T.pay_time as buyVipTime
+        FROM member_level_order T
+        INNER JOIN  wechat W ON T.uid=W.id
+        INNER JOIN member_level M ON T.level_id=M.id
+        where 1=1  and DATE_FORMAT(pay_time,'%Y-%m-%d')=DATE_FORMAT(NOW(),'%Y-%m-%d') AND T.is_pay=1
+            and T.is_delete=0
+    </select>
+
+
+    <select id="monthUserLevel" resultType="com.xyhc.cms.entity.MemberLevelOrderEntity">
+        SELECT *
+        FROM member_level_order T
+        where 1=1  and DATE_FORMAT(pay_time,'%Y-%m')=DATE_FORMAT(NOW(),'%Y-%m') AND T.is_pay=1
+            and T.is_delete=0
+    </select>
+
+    <select id="monthUserLevelPage" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT W.*,
+        M.name as memberLevel,
+        T.pay_time as buyVipTime
+        FROM member_level_order T
+        INNER JOIN wechat W ON T.uid=W.id
+        INNER JOIN member_level M ON T.level_id=M.id
+        where 1=1 and DATE_FORMAT(pay_time,'%Y-%m')=DATE_FORMAT(NOW(),'%Y-%m') AND T.is_pay=1
+        and T.is_delete=0
+        <if test="params.memberLevel!= null and params.memberLevel !=''">
+            and M.name like '%${params.memberLevel}%'
+        </if>
+    </select>
+
+    <select id="teamAdd" resultType="com.xyhc.cms.entity.Wechat">
+         SELECT *
+         FROM member_level_order T
+         INNER JOIN member_level M ON T.level_id=M.id
+         INNER JOIN wechat W ON W.id=T.uid
+         INNER JOIN wechat W1 ON W1.id=W.parent_id
+         where 1=1  and  YEARWEEK(date_format(pay_time,'%Y-%m-%d'),1) = YEARWEEK(date_format(NOW(),'%Y-%m-%d'),1)
+         AND M.level_type='B' AND T.is_pay=1
+             and T.is_delete=0
+    </select>
+
+    <select id="teamAddPage" resultType="com.xyhc.cms.entity.Wechat">
+         SELECT W1.*
+         FROM member_level_order T
+         INNER JOIN member_level M ON T.level_id=M.id
+         INNER JOIN wechat W ON W.id=T.uid
+         INNER JOIN wechat W1 ON W1.id=W.parent_id
+         where 1=1  and  YEARWEEK(date_format(pay_time,'%Y-%m-%d'),1) = YEARWEEK(date_format(NOW(),'%Y-%m-%d'),1)
+         AND M.level_type='B' AND T.is_pay=1
+             and T.is_delete=0
+    </select>
+
+    <select id="teamAddDetailPage" resultType="com.xyhc.cms.entity.Wechat">
+         SELECT W.*
+         FROM member_level_order T
+         INNER JOIN member_level M ON T.level_id=M.id
+         INNER JOIN wechat W ON W.id=T.uid
+         INNER JOIN wechat W1 ON W1.id=W.parent_id
+         where 1=1  and  YEARWEEK(date_format(pay_time,'%Y-%m-%d'),1) = YEARWEEK(date_format(NOW(),'%Y-%m-%d'),1)
+         AND M.level_type='B' AND T.is_pay=1
+         AND W1.id='${params.id}'
+         and T.is_delete=0
+    </select>
+
+
+    <select id="teamMoney" resultType="com.xyhc.cms.entity.Wechat">
+   SELECT A.*,T1.sumXfBalance from wechat A
+INNER JOIN member_level_order M ON A.id=M.uid and M.is_pay=1 and M.is_delete=0
+INNER JOIN member_level L ON M.level_id=L.id and L.level_type='A'
+
+INNER JOIN(
+  SELECT G1.pid,SUM(O.price) as  sumXfBalance from (
+  SELECT DISTINCT W.id,W.id as pid,M.pay_time
+	FROM wechat W
+	INNER JOIN member_level_order M ON W.id=M.uid and M.is_pay=1 and M.is_delete=0
+	WHERE 1=1
+	UNION
+	SELECT W1.id,W.id as pid,M.pay_time
+	FROM  wechat W
+	INNER JOIN member_level_order M ON W.id=M.uid and M.is_pay=1 and M.is_delete=0
+	INNER JOIN wechat W1 ON W.id=W1.parent_id
+	WHERE 1=1
+	UNION
+	SELECT W2.id,W.id as pid,M.pay_time
+	FROM  wechat W
+	INNER JOIN member_level_order M ON W.id=M.uid and M.is_pay=1 and M.is_delete=0
+	INNER JOIN wechat W1 ON W.id=W1.parent_id
+	INNER JOIN wechat W2 ON W1.id=W2.parent_id
+	WHERE 1=1 )G1
+	INNER JOIN commodity_order O ON G1.id=O.uid and O.is_pay=1 AND  YEARWEEK(date_format(O.pay_time,'%Y-%m-%d'),1) = YEARWEEK(date_format(NOW(),'%Y-%m-%d'),1) AND O.pay_time>G1.pay_time
+	GROUP BY G1.pid
+
+)T1  ON T1.pid=A.id
+    </select>
+
+
+    <select id="teamMoneyPage" resultType="com.xyhc.cms.entity.Wechat">
+
+
+     SELECT A.*,T1.sumXfBalance from wechat A
+INNER JOIN member_level_order M ON A.id=M.uid and M.is_pay=1 and M.is_delete=0
+INNER JOIN member_level L ON M.level_id=L.id and L.level_type='A'
+
+INNER JOIN(
+  SELECT G1.pid,SUM(O.price) as  sumXfBalance from (
+		SELECT DISTINCT W.id,W.id as pid,M.pay_time
+		FROM wechat W
+		INNER JOIN member_level_order M ON W.id=M.uid and M.is_pay=1 and M.is_delete=0
+		WHERE 1=1
+		UNION
+		SELECT W1.id,W.id as pid,M.pay_time
+		FROM  wechat W
+		INNER JOIN member_level_order M ON W.id=M.uid and M.is_pay=1 and M.is_delete=0
+		INNER JOIN wechat W1 ON W.id=W1.parent_id
+		WHERE 1=1
+		UNION
+		SELECT W2.id,W.id as pid,M.pay_time
+		FROM  wechat W
+		INNER JOIN member_level_order M ON W.id=M.uid and M.is_pay=1 and M.is_delete=0
+		INNER JOIN wechat W1 ON W.id=W1.parent_id
+		INNER JOIN wechat W2 ON W1.id=W2.parent_id
+		WHERE 1=1
+	)G1
+	INNER JOIN commodity_order O ON G1.id=O.uid and O.is_pay=1 AND  YEARWEEK(date_format(O.pay_time,'%Y-%m-%d'),1) = YEARWEEK(date_format(NOW(),'%Y-%m-%d'),1) AND O.pay_time>G1.pay_time
+	GROUP BY G1.pid
+
+)T1  ON T1.pid=A.id
+    </select>
+
+    <select id="balanceCollectConsole" resultType="com.xyhc.cms.entity.Wechat">
+
+             SELECT a.balance_withdrawn,b.collected_balances,c.collected_balances
+        ,a.id from wechat a
+        LEFT JOIN (SELECT user_id,sum(collected_balances)  as collected_balances from xf_log  WHERE xf_account=1 AND xf_classify NOT IN ('CASH_OUT_COLLECTED')
+        GROUP BY user_id) b on a.id=b.user_id
+        LEFT JOIN (SELECT user_id,sum(xf_balance)  as collected_balances from xf_log  WHERE 1=1 AND xf_classify  IN ('CASH_OUT_COLLECTED')
+        GROUP BY user_id) c on a.id=c.user_id
+        WHERE  (CASE WHEN a.balance_withdrawn is NULL then 0 ELSE a.balance_withdrawn END) != (CASE WHEN b.collected_balances is NULL then 0 ELSE b.collected_balances END)-(CASE WHEN c.collected_balances is NULL then 0 ELSE c.collected_balances END)
+
+    </select>
+    <select id="orderMoneyConsole" resultType="com.xyhc.cms.entity.Wechat">
+  SELECT *from commodity_order WHERE total  !=(commodity_total-discount+freight) and is_pay=1
+      </select>
+    <select id="pointsConsole" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT (CASE WHEN a.integral_money is NULL then 0 ELSE a.integral_money END) ,
+        (CASE WHEN b.xf_balance is NULL then 0 ELSE b.xf_balance END) ,
+        (CASE WHEN c.xf_balance is NULL then 0 ELSE c.xf_balance END),
+        a.id
+        from wechat a
+        LEFT JOIN (SELECT user_id,sum(xf_balance)  as xf_balance from integral_log  WHERE 1=1 AND xf_classify NOT in ('POINTS_PAY')
+        GROUP BY user_id) b on a.id=b.user_id
+        LEFT JOIN (SELECT user_id,sum(xf_balance)  as xf_balance from integral_log  WHERE 1=1 AND xf_classify  in ('POINTS_PAY')
+        GROUP BY user_id) c on a.id=c.user_id
+        WHERE (CASE WHEN a.integral_money is NULL then 0 ELSE a.integral_money END) !=(CASE WHEN b.xf_balance is NULL then 0 ELSE b.xf_balance END) -(CASE WHEN c.xf_balance is NULL then 0 ELSE c.xf_balance END)
+    </select>
+    <select id="shoppingMoneyConsole" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT * from wechat a
+        LEFT JOIN (SELECT user_id,sum(xf_balance)  as xf_balance from xf_log  WHERE xf_classify='DISCOUNT'
+        GROUP BY user_id) b on a.id=b.user_id
+        WHERE a.shopping_money!=(200-b.xf_balance)
+    </select>
+
+</mapper>

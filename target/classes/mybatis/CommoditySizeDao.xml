@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.CommoditySizeDao">
+
+    <select id="page" resultType="com.xyhc.cms.entity.CommoditySizeEntity">
+        SELECT *
+        FROM commodity_size T
+        where 1=1 and is_delete=0
+        <if test="params.sizeName!= null and params.sizeName !=''">
+            and T.size_name like '%${params.sizeName}%'
+        </if>
+        <if test="params.commodityId!= null and params.commodityId !=''">
+            and T.commodity_id = '${params.commodityId}'
+        </if>
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.CommoditySizeEntity">
+        SELECT *
+        FROM commodity_size T
+        where 1=1 and is_delete=0
+        <if test="params.commodityId!= null and params.commodityId !=''">
+            and T.commodity_id like '%${params.commodityId}%'
+        </if>
+    </select>
+
+</mapper>

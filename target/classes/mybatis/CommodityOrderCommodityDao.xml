@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.CommodityOrderCommodityDao">
+
+
+    <select id="page" resultType="com.xyhc.cms.entity.CommodityOrderCommodityEntity">
+        SELECT T.*,C.commodity_main_imgurl
+        FROM commodity_order_commodity T
+        LEFT JOIN commodity C ON T.commodity_id=C.id
+        where 1=1 and T.is_delete=0
+        <if test="params.commodityName!= null and params.commodityName !=''">
+            and T.commodity_name like '%${params.commodityName}%'
+        </if>
+        <if test="params.orderId!= null and params.orderId !=''">
+            and T.order_id like '%${params.orderId}%'
+        </if>
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.CommodityOrderCommodityEntity">
+        SELECT *
+        FROM commodity_order_commodity T
+        where 1=1 and is_delete=0
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+
+    </select>
+
+    <select id="allTwo" resultType="com.xyhc.cms.entity.CommodityOrderCommodityEntity">
+        SELECT *
+        FROM commodity_order_commodity T
+        where 1=1 and is_delete=0
+    </select>
+
+    <select id="queryCommodityId" resultType="com.xyhc.cms.entity.CommodityOrderCommodityEntity">
+        SELECT *
+        FROM commodity_order_commodity T
+        where 1=1 and is_delete=0 AND T.order_id = #{commodityId}
+    </select>
+
+    <select id="commodityorderSummary" resultType="com.xyhc.cms.vo.common.CommoditySummaryVo">
+       SELECT c.id as commodity_id,(count(1) + c.sales_count) as commodity_total
+       from commodity_order a
+       INNER JOIN commodity_order_commodity b on a.id=b.order_id  AND a.is_pay=1
+	   RIGHT JOIN commodity c on  c.id=b.commodity_id
+       WHERE 1=1
+      GROUP BY c.id
+
+    </select>
+
+    <select id="queryOrderId" resultType="com.xyhc.cms.entity.CommodityOrderCommodityEntity">
+        SELECT *
+        FROM commodity_order_commodity T
+        where 1=1 and is_delete=0 AND T.order_id = #{orderId}
+    </select>
+
+    <select id="salesPrice" resultType="java.lang.Double">
+
+
+               SELECT SUM(round(T.num*S.price,2))  FROM  commodity_order_commodity T
+        LEFT JOIN commodity_spec S ON T.spec_id=S.id
+        WHERE T.order_id=#{orderId}
+				GROUP BY T.order_id
+    </select>
+
+</mapper>

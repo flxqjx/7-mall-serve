@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.MessageDao">
+
+
+    <select id="page" resultType="com.xyhc.cms.entity.MessageEntity">
+--         SELECT *
+--         FROM message T
+--         where 1=1 and is_delete=0
+        SELECT
+        a.*
+        FROM  message a
+        INNER JOIN message_classify b ON a.classify_id=b.id
+        where 1=1 and a.is_delete=0
+        <if test="params.name!= null and params.name !=''">
+            and a.title like '%${params.name}%'
+        </if>
+        <if test="params.classifyId!= null and params.classifyId !=''">
+            and b.id like '%${params.classifyId}%'
+        </if>
+        GROUP BY a.create_time
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.InformationEntity">
+        SELECT *
+        FROM message T
+        where 1=1 and is_delete=0
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+
+    </select>
+
+</mapper>

@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.WechatDao">
+
+    <select id="page" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT T.*,T1.T3Performance as totalPerforman,
+        L.level_type as memberLevel,
+        (CASE WHEN Y.xf_balance is NULL then 0 ELSE Y.xf_balance END)-(CASE WHEN CahsOUT.xf_balance is NULL then 0 ELSE
+        CahsOUT.xf_balance END) as sumBalance,
+        T7.childCount parentSize
+        FROM wechat T
+        LEFT JOIN member_level_order M on T.id=M.uid and M.is_pay=1 and M.is_delete=0
+        LEFT JOIN member_level L on L.id=M.level_id
+
+
+        LEFT JOIN ( select SUM(xf_balance) as xf_balance,user_id from xf_log where 1=1 and is_delete=0 and xf_account in
+        (0,1) and xf_classify in
+        ('COMMON_SHARING','VIP_SHARING','VIP_JICHA_SHARING','UPGRADE','JOIN_MONEY','INVITE_REWARD','CUT_REWARD')
+        GROUP BY user_id
+        )Y ON Y.user_id=T.id
+
+        LEFT JOIN (
+        select SUM(apply_money) as xf_balance,uid as user_id
+        from ms_cash_out where 1=1 and is_delete=0 AND is_pass=1
+        GROUP BY uid
+        )CahsOUT ON CahsOUT.user_id=T.id
+
+
+        LEFT JOIN (
+
+
+        SELECT TT.pid,COUNT(1) as childCount
+        from (
+        -- SELECT DISTINCT W.id,W.id as pid
+        -- FROM wechat W
+        -- WHERE 1=1
+        --
+        -- UNION
+        SELECT W1.id,W.id as pid
+        FROM wechat W
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        WHERE 1=1
+
+        UNION
+        SELECT W2.id,W.id as pid
+        FROM wechat W
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        INNER JOIN wechat W2 ON W1.id=W2.parent_id
+        WHERE 1=1
+
+        )TT
+
+        GROUP BY TT.pid
+
+        )T7 ON T7.pid=T.id
+
+
+        LEFT JOIN (
+        SELECT T2.pid,SUM(T3.price) as T3Performance FROM (
+
+        SELECT DISTINCT W.id,W.id as pid,M.pay_time
+        FROM wechat W
+        INNER JOIN member_level_order M on W.id=M.uid and M.is_pay=1 and M.is_delete=0
+        INNER JOIN member_level L on L.id=M.level_id
+        WHERE 1=1
+
+        UNION
+        SELECT W1.id,W.id as pid,M.pay_time
+        FROM wechat W
+        INNER JOIN member_level_order M on W.id=M.uid and M.is_pay=1 and M.is_delete=0
+        INNER JOIN member_level L on L.id=M.level_id
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        WHERE 1=1
+
+        UNION
+        SELECT W2.id,W.id as pid,M.pay_time
+        FROM wechat W
+        INNER JOIN member_level_order M on W.id=M.uid and M.is_pay=1 and M.is_delete=0
+        INNER JOIN member_level L on L.id=M.level_id
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        INNER JOIN wechat W2 ON W1.id=W2.parent_id
+        WHERE 1=1
+
+        )T2
+        INNER JOIN commodity_order T3 ON T2.id=T3.uid AND T3.is_pay=1 AND T3.pay_time>T2.pay_time AND
+        T3.order_status!='REFUNDED'
+
+        GROUP BY T2.pid
+        )T1 ON T.id=T1.pid
+
+        WHERE 1=1
+        <if test="params.nickName!= null and params.nickName !=''">
+            and T.nick_name like '%${params.nickName}%'
+        </if>
+        <if test="params.memberLevel!= null and params.memberLevel !='' and params.memberLevel !='-1' ">
+            and L.level_type like '%${params.memberLevel}%'
+        </if>
+
+        <if test="params.memberLevel!= null and params.memberLevel !='' and params.memberLevel =='-1' ">
+            and M.id is NULL
+        </if>
+        <if test="params.startTime!= null and params.startTime !=''  ">
+            and T.create_time >= '${params.startTime}'
+        </if>
+
+        <if test="params.endTime!= null and params.endTime !=''  ">
+            and '${params.endTime}'>=T.create_time
+        </if>
+        <if test="params.uid!= null and params.uid !=''  ">
+            and T.id = #{params.uid}
+        </if>
+
+    </select>
+
+    <select id="teamPage" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT T.*,T1.T3Performance as teamTotalPerforman,
+        L.level_type as memberLevel
+        FROM wechat T
+        LEFT JOIN member_level_order M ON T.id=M.uid AND M.is_pay=1 and M.is_delete=0
+        LEFT JOIN member_level L ON M.level_id=L.id
+
+
+        LEFT JOIN (
+
+        -- SELECT DISTINCT W.id,W.id as pid
+        -- FROM wechat W
+        -- WHERE 1=1
+        --
+        -- UNION
+        SELECT W1.id,W.id as pid
+        FROM wechat W
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        WHERE 1=1
+
+        UNION
+        SELECT W2.id,W.id as pid
+        FROM wechat W
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        INNER JOIN wechat W2 ON W1.id=W2.parent_id
+        WHERE 1=1
+
+        )T7 ON T7.id=T.id
+
+
+        LEFT JOIN (
+        SELECT T2.pid,SUM(T3.price) as T3Performance FROM (
+
+        SELECT DISTINCT W.id,W.id as pid,M.pay_time
+        FROM wechat W
+        INNER JOIN member_level_order M on W.id=M.uid and M.is_pay=1 and M.is_delete=0
+        INNER JOIN member_level L on L.id=M.level_id
+        WHERE 1=1
+
+        UNION
+        SELECT W1.id,W.id as pid,M.pay_time
+        FROM wechat W
+        INNER JOIN member_level_order M on W.id=M.uid and M.is_pay=1 and M.is_delete=0
+        INNER JOIN member_level L on L.id=M.level_id
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        WHERE 1=1
+
+        UNION
+        SELECT W2.id,W.id as pid,M.pay_time
+        FROM wechat W
+        INNER JOIN member_level_order M on W.id=M.uid and M.is_pay=1 and M.is_delete=0
+        INNER JOIN member_level L on L.id=M.level_id
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        INNER JOIN wechat W2 ON W1.id=W2.parent_id
+        WHERE 1=1
+
+        )T2
+        INNER JOIN commodity_order T3 ON T2.id=T3.uid AND T3.is_pay=1 AND T3.pay_time>T2.pay_time
+        GROUP BY T2.pid
+        )T1 ON T.id=T1.pid
+        where 1=1
+        <if test="params.uid!= null and params.uid !=''">
+            and T.id = #{params.uid}
+        </if>
+        <if test="params.id!= null and params.id !=''">
+            and T7.pid = #{params.id}
+        </if>
+        <if test="params.name!= null and params.name !=''">
+            and T.nick_name like '%${params.name}%'
+        </if>
+
+        <if test="params.levelType!= null and params.levelType !=''">
+
+            <if test="params.levelType =='-1'">
+
+                and L.level_type is null
+            </if>
+
+            <if test="params.levelType !='-1'">
+
+                and L.level_type = '${params.levelType}'
+            </if>
+
+        </if>
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT *
+        FROM wechat T
+        where 1=1
+        <if test="params.nickName!= null and params.nickName !=''">
+            and T.nick_name like '%${params.nickName}%'
+        </if>
+    </select>
+
+    <select id="totalB" resultType="java.lang.Double">
+        select SUM(total) from commodity_order where 1=1 and is_delete=0 and is_pay=1
+        <if test="mapB.userId!= null and mapB.userId !=''">
+            and user_id = #{mapB.userId} or uid = #{mapB.userId}
+        </if>
+    </select>
+
+    <select id="totalPu" resultType="java.lang.Double">
+        select SUM(total) from commodity_order where 1=1 and is_delete=0 and is_pay=1
+        <if test="mapPu.userId!= null and mapPu.userId !=''">
+            and user_id = #{mapPu.userId}
+        </if>
+    </select>
+
+    <select id="totalMyB" resultType="java.lang.Double">
+        select SUM(total) from commodity_order where 1=1 and is_delete=0 and is_pay=1
+        <if test="mapMyB.uid!= null and mapMyB.uid !=''">
+            and uid = #{mapMyB.uid}
+        </if>
+        <if test="mapMyB.levelPayTime!= null">
+            and pay_time > #{mapMyB.levelPayTime}
+        </if>
+    </select>
+
+    <select id="totalMyBPu" resultType="java.lang.Double">
+        select SUM(total) from commodity_order where 1=1 and is_delete=0 and is_pay=1
+        <if test="mapMyBPu.userId!= null and mapMyBPu.userId !=''">
+            and user_id = #{mapMyBPu.userId}
+        </if>
+    </select>
+
+    <select id="totalOrderNum" resultType="java.lang.Double">
+        select SUM(total) from commodity_order where 1=1 and is_delete=0 and is_pay=1
+        <if test="orderNum.userId!= null and orderNum.userId !=''">
+            and user_id = #{orderNum.userId}
+        </if>
+    </select>
+
+    <select id="xfLogTotal" resultType="java.lang.Double">
+        select SUM(xf_balance) from xf_log where 1=1 and is_delete=0 and xf_account in (0,1) and xf_classify in
+        ('COMMON_SHARING','VIP_SHARING','VIP_JICHA_SHARING','UPGRADE','JOIN_MONEY','INVITE_REWARD','CUT_REWARD')
+        <if test="xfLog.userId!= null and xfLog.userId !=''">
+            and user_id = #{xfLog.userId}
+        </if>
+    </select>
+
+    <select id="xfLogCollectedBalances" resultType="java.lang.Double">
+        select SUM(xf_balance) from xf_log where 1=1 and is_delete=0 and xf_account in (0,1) and xf_classify in
+        ('COMMON_SHARING','VIP_SHARING','VIP_JICHA_SHARING','UPGRADE','JOIN_MONEY','INVITE_REWARD','CUT_REWARD')
+        <if test="params.userId!= null and params.userId !=''">
+            and user_id = #{params.userId}
+        </if>
+    </select>
+    <select id="xfLogCollectedBalancesReject" resultType="java.lang.Double">
+        select SUM(xf_balance) from xf_log where 1=1 and is_delete=0 and xf_account in (0,1) and xf_classify in
+        ('CASH_OUT_REJECT')
+        <if test="params.userId!= null and params.userId !=''">
+            and user_id = #{params.userId}
+        </if>
+    </select>
+    <select id="xfLogCanWithdraw" resultType="java.lang.Double">
+        select SUM(collected_balances) from xf_log where 1=1 and is_delete=0 and xf_account=1 and xf_classify in
+        ('COMMON_SHARING','VIP_SHARING','VIP_JICHA_SHARING','UPGRADE','JOIN_MONEY','INVITE_REWARD','CUT_REWARD')
+        <if test="paramsCanWithdraw.userId!= null and paramsCanWithdraw.userId !=''">
+            and user_id = #{paramsCanWithdraw.userId}
+        </if>
+    </select>
+
+    <select id="xfLogRefund" resultType="java.lang.Double">
+        select SUM(refund_total) from xf_log where 1=1 and is_delete=0 and xf_account=2 and xf_classify in
+        ('COMMON_SHARING','VIP_SHARING','VIP_JICHA_SHARING','UPGRADE','JOIN_MONEY')
+        <if test="paramsRefund.userId!= null and paramsRefund.userId !=''">
+            and user_id = #{paramsRefund.userId}
+        </if>
+    </select>
+
+    <select id="xfLogCollectedTotal" resultType="java.lang.Double">
+        select SUM(xf_balance) from xf_log where 1=1 and is_delete=0 and xf_classify='CASH_OUT_COLLECTED'
+        <if test="paramsCollected.userId!= null and paramsCollected.userId !=''">
+            and user_id = #{paramsCollected.userId}
+        </if>
+    </select>
+
+    <select id="orderTotal" resultType="java.lang.Double">
+        select SUM(total) from commodity_order where 1=1 and is_delete=0 and is_pay=1
+        <if test="orderMy.uid!= null and orderMy.uid !=''">
+            and uid = #{orderMy.uid}
+        </if>
+    </select>
+
+
+    <select id="wechatTotalPerforman" resultType="com.xyhc.cms.entity.Wechat">
+    SELECT A.*,T1.sumXfBalance from wechat A
+    INNER JOIN member_level_order M ON A.id=M.uid and M.is_pay=1 and M.is_delete=0
+    INNER JOIN member_level L ON M.level_id=L.id and L.level_type='A'
+
+   INNER JOIN(
+   SELECT G1.pid,SUM(O.commodity_total) as  sumXfBalance from (	SELECT DISTINCT W.id,W.id as pid
+	FROM wechat W
+	WHERE 1=1
+	UNION
+	SELECT W1.id,W.id as pid
+	FROM  wechat W
+	INNER JOIN wechat W1 ON W1.id=W.parent_id
+	WHERE 1=1
+	UNION
+	SELECT W2.id,W.id as pid
+	FROM  wechat W
+	INNER JOIN wechat W1 ON W1.id=W.parent_id
+	INNER JOIN wechat W2 ON W2.id=W1.parent_id
+	WHERE 1=1 )G1
+	INNER JOIN commodity_order O ON G1.id=O.uid and O.is_pay=1
+	GROUP BY G1.pid
+
+    )T1  ON T1.pid=A.id
+
+
+    WHERE   A.id=#{uid}
+    </select>
+
+    <select id="levelCList" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT a.*from wechat a
+        INNER JOIN member_level_order b on a.id=b.uid AND b.is_pay=1  AND b.is_delete=0
+        INNER JOIN member_level c on b.level_id=c.id
+        WHERE 1=1 and c.level_type='C'
+    </select>
+    <select id="normalUser" resultType="com.xyhc.cms.entity.Wechat">
+        SELECT W.* FROM wechat W
+        INNER JOIN (
+			  SELECT DISTINCT W.id,W.id as pid
+        FROM wechat W
+        WHERE 1=1
+        UNION
+        SELECT W1.id,W.id as pid
+        FROM wechat W
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        WHERE 1=1
+
+        UNION
+        SELECT W2.id,W.id as pid
+        FROM wechat W
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        INNER JOIN wechat W2 ON W1.id=W2.parent_id
+        WHERE 1=1) T ON W.id=T.id
+        LEFT JOIN member_level_order M ON T.id=M.uid AND M.is_pay=1
+		WHERE 1=1 AND T.pid=#{uid} AND M.id IS NULL
+
+    </select>
+
+    <select id="normalUserOrder" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT O.* FROM wechat W
+        INNER JOIN (
+			  SELECT DISTINCT W.id,W.id as pid
+        FROM wechat W
+        WHERE 1=1
+        UNION
+        SELECT W1.id,W.id as pid
+        FROM wechat W
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        WHERE 1=1
+
+        UNION
+        SELECT W2.id,W.id as pid
+        FROM wechat W
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        INNER JOIN wechat W2 ON W1.id=W2.parent_id
+        WHERE 1=1) T ON W.id=T.id
+        INNER JOIN commodity_order O ON  O.uid=T.id
+        LEFT JOIN member_level_order M ON T.id=M.uid AND M.is_pay=1
+		WHERE 1=1 AND T.pid=#{uid} AND M.id IS NULL
+
+    </select>
+
+    <select id="birthday" resultType="com.xyhc.cms.entity.MsLotteryEntity">
+        SELECT *
+        FROM ms_lottery T
+        where 1=1 and T.is_delete=0
+        <if test="params.birthday!= null and params.birthday !=''">
+            and new date() like '%${params.birthday}%'
+        </if>
+    </select>
+</mapper>

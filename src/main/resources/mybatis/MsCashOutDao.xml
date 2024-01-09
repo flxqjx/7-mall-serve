@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.MsCashOutDao">
+
+
+    <select id="page" resultType="com.xyhc.cms.entity.MsCashOutEntity">
+        SELECT T.*
+        FROM ms_cash_out T
+        INNER JOIN wechat W ON T.uid=W.id
+        where 1=1 and T.is_delete=0
+        <if test="params.isPass!= null and params.isPass !=''">
+            and T.is_pass = #{params.isPass}
+        </if>
+        <if test="params.uid!= null and params.uid !=''">
+            and T.uid= '${params.uid}'
+        </if>
+    </select>
+
+    <select id="pageBack" resultType="com.xyhc.cms.entity.MsCashOutEntity">
+        SELECT T.*,
+        W.card_no_front_url,
+        W.nick_name,
+        W.mobile,
+        W.card_no_rear_url
+        FROM ms_cash_out T
+        INNER JOIN wechat W ON T.uid=W.id
+        where 1=1 and T.is_delete=0
+        <if test="params.nickName!= null and params.nickName !=''">
+            and W.nick_name like '%${params.nickName}%'
+        </if>
+        <if test="params.mobile!= null and params.mobile !=''">
+            and W.mobile like '%${params.mobile}%'
+        </if>
+
+        <if test="params.isPass!= null and params.isPass !=''">
+            and T.is_pass = '${params.isPass}'
+        </if>
+
+        <if test="params.merchantPayStatus!= null and params.merchantPayStatus !=''">
+            and T.merchant_pay_status = '${params.merchantPayStatus}'
+        </if>
+    </select>
+    <select id="pageByUid" resultType="com.xyhc.cms.entity.MsCashOutEntity">
+        SELECT T.*
+        FROM ms_cash_out T
+        INNER JOIN wechat W ON T.uid=W.id
+        where 1=1 and T.is_delete=0 and T.is_pass !=-1
+        <if test="params.uid!= null and params.uid !=''">
+            and T.uid= '${params.uid}'
+        </if>
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.MsCashOutEntity">
+        SELECT *
+        FROM ms_cash_out T
+        where 1=1 and is_delete=0
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+
+    </select>
+
+</mapper>

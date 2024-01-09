@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.BlockDao">
+    <select id="page" resultType="com.xyhc.cms.entity.SysBlock">
+        SELECT * from sys_block
+        where 1=1 and is_delete=0
+        <if test="params.block!= null and params.block!= ''">
+            and name like '%${params.queryName}%'
+        </if>
+
+    </select>
+
+</mapper>

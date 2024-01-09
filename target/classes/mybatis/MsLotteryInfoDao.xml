@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.MsLotteryInfoDao">
+
+
+    <select id="page" resultType="com.xyhc.cms.entity.MsLotteryInfoEntity">
+        SELECT *
+        FROM ms_lottery_info T
+        where 1=1 and is_delete=0
+        <if test="params.title!= null and params.title !=''">
+            and T.title like '%${params.title}%'
+        </if>
+        <if test="params.lotteryId!= null and params.lotteryId !=''">
+            and T.lottery_id = '${params.lotteryId}'
+        </if>
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.MsLotteryInfoEntity">
+        SELECT *
+        FROM ms_lottery_info T
+        where 1=1 and is_delete=0
+        <if test="params.lotteryId!= null and params.lotteryId !=''">
+            and T.lottery_id = '${params.lotteryId}'
+        </if>
+    </select>
+
+</mapper>

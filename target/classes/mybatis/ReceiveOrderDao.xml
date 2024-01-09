@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.ReceiveOrderDao">
+
+
+    <select id="page" resultType="com.xyhc.cms.entity.ReceiveOrderEntity">
+        SELECT *
+        FROM receive_order T
+        where 1=1 and is_delete=0
+        <if test="params.receiveName!= null and params.receiveName !=''">
+            and T.receive_name like '%${params.receiveName}%'
+        </if>
+        <if test="params.orderStatus!= null and params.orderStatus !=''">
+            and T.order_status = '${params.orderStatus}'
+        </if>
+        <if test="params.bagNo!= null and params.bagNo !=''">
+            and T.bag_no like '%${params.bagNo}%'
+        </if>
+        <if test="params.receiveTell!= null and params.receiveTell !=''">
+            and T.receive_tell like '%${params.receiveTell}%'
+        </if>
+        <if test="params.receiveCommodityName!= null and params.receiveCommodityName !=''">
+            and T.receive_commodity_name like '%${params.receiveCommodityName}%'
+        </if>
+        <if test="params.receiveCommodityName!= null and params.expressNo !=''">
+            and T.express_no like '%${params.expressNo}%'
+        </if>
+        <if test="params.startTime!= null and params.startTime !=''  ">
+            and T.create_time >= '${params.startTime}'
+        </if>
+
+        <if test="params.endTime!= null and params.endTime !=''  ">
+            and '${params.endTime}'>=T.create_time
+        </if>
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.ReceiveOrderEntity">
+        SELECT *
+        FROM receive_order T
+        left JOIN wechat W on W.id=T.uid
+        where 1=1 and is_delete=0
+        <if test="params.userName!= null and params.userName !=''">
+            and W.nick_name like '%${params.userName}%'
+        </if>
+    </select>
+
+    <select id="myOrder" resultType="com.xyhc.cms.entity.ReceiveOrderEntity">
+        SELECT *
+        FROM receive_order T
+        where 1=1 and is_delete=0 and T.user_id= #{params.userId}
+    </select>
+
+</mapper>

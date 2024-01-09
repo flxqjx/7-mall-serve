@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.VideoDao">
+    <select id="page" resultType="com.xyhc.cms.entity.Video">
+        SELECT  *
+        FROM video
+        where 1=1 and is_delete=0
+        <if test="params.videoName!= null and params.videoName !=''">
+            and video_name like '%${params.videoName}%'
+        </if>
+    </select>
+
+
+
+</mapper>

@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.XfLogDao">
+
+
+    <select id="page" resultType="com.xyhc.cms.entity.XfLogEntity">
+        SELECT *
+        FROM xf_log T
+        where 1=1 and is_delete=0
+    </select>
+
+    <select id="balanceDetail" resultType="com.xyhc.cms.entity.XfLogEntity">
+        SELECT *
+        FROM xf_log T
+        where 1=1 and is_delete=0 and T.xf_balance>0
+        and T.xf_classify in
+        ('COMMON_SHARING','VIP_SHARING','VIP_JICHA_SHARING','UPGRADE','JOIN_MONEY','INVITE_REWARD','CUT_REWARD')
+        <if test="params.id!= null and params.id !=''">
+            and T.user_id = #{params.id}
+        </if>
+        and T.xf_account!=2
+    </select>
+
+
+    <select id="payPage" resultType="com.xyhc.cms.entity.XfLogEntity">
+        SELECT *
+        FROM xf_log T
+        where 1=1 and is_delete=0
+        <if test="params.status!= null and params.status !=''">
+            and T.status = #{params.status}
+        </if>
+        <if test="params.userId!= null and params.userId !=''">
+            and T.user_id like '%${params.userId}%'
+        </if>
+    </select>
+
+    <select id="orderRevenue" resultType="com.xyhc.cms.entity.XfLogEntity">
+        -- SELECT *
+        -- FROM xf_log
+        -- where 1=1 and is_delete=0 and xf_classify in ('COMMON_SHARING','VIP_SHARING','VIP_JICHA_SHARING')
+        SELECT
+        a.*
+        FROM xf_log a
+        INNER JOIN commodity_order b ON a.order_id=b.id
+        where 1=1 and a.is_delete=0 and a.xf_classify in
+        ('COMMON_SHARING','VIP_SHARING','VIP_JICHA_SHARING','UPGRADE','JOIN_MONEY','INVITE_REWARD','CUT_REWARD')
+        <if test="params.orderStatus!= null and params.orderStatus !=''">
+            <if test="params.orderStatus==0">
+                and a.xf_account=0
+            </if>
+            <if test="params.orderStatus==1">
+                and a.xf_account=1
+            </if>
+            <if test="params.orderStatus==2">
+                and b.order_status='APPLY_REFUND'
+            </if>
+        </if>
+        <if test="params.userId!= null and params.userId !=''">
+            and a.user_id like '%${params.userId}%'
+        </if>
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.XfLogEntity">
+        SELECT *
+        FROM xf_log T
+        where 1=1 and is_delete=0 and T.xf_balance>0 and T.xf_classify in
+        ('COMMON_SHARING','VIP_SHARING','VIP_JICHA_SHARING','UPGRADE','JOIN_MONEY','INVITE_REWARD','CUT_REWARD')
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+        <if test="params.uid!= null and params.uid !=''">
+            and T.user_id like '%${params.uid}%'
+        </if>
+        order by T.create_time desc
+    </select>
+
+    <select id="receivedLog" resultType="com.xyhc.cms.entity.XfLogEntity">
+        SELECT *
+        FROM xf_log T
+        where 1=1 and is_delete=0 and T.xf_balance>0 and T.xf_classify in
+        ('COMMON_SHARING','VIP_SHARING','VIP_JICHA_SHARING','UPGRADE','JOIN_MONEY','INVITE_REWARD','CUT_REWARD')
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+        <if test="params.uid!= null and params.uid !=''">
+            and T.user_id like '%${params.uid}%'
+        </if>
+        -- and T.xf_account=1
+        order by T.create_time desc
+    </select>
+
+    <select id="shoppingMoneyall" resultType="com.xyhc.cms.entity.XfLogEntity">
+        SELECT *
+        FROM xf_log T
+        where 1=1 and is_delete=0 and T.xf_classify in ('MEMBER_AWARD','DISCOUNT','DISCOUNT_REFUND')
+        and T.xf_balance>0
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+        <if test="params.uid!= null and params.uid !=''">
+            and T.user_id like '%${params.uid}%'
+        </if>
+        order by T.create_time DESC
+    </select>
+
+    <select id="xfLogRefundTotal" resultType="java.lang.Double">
+        select SUM(xf_balance) from xf_log where 1=1 and is_delete=0 and xf_classify in
+        ('COMMON_SHARING','VIP_SHARING','VIP_JICHA_SHARING','UPGRADE','JOIN_MONEY','INVITE_REWARD','CUT_REWARD')
+        <if test="refund.userId!= null and refund.userId !=''">
+            and user_id = #{refund.userId}
+        </if>
+    </select>
+
+    <select id="notCompleteBalance" resultType="com.xyhc.cms.entity.XfLogEntity">
+        SELECT T.*
+        FROM xf_log T
+        where 1=1 and T.xf_account=0
+        and create_time >DATE_SUB(now(), INTERVAL 7 DAY)
+    </select>
+
+
+    <select id="deducPage" resultType="com.xyhc.cms.vo.commodity.OrderTjVo">
+       SELECT O.id as orderNo,
+       O.price as salesPrice ,
+       O.commodity_total as vipPrice,
+       T.xf_balance as deducBuyPrice,
+       T.xf_remark as xfRemark,
+       T.xf_classify as xfClassify,
+       O.total as payMoney,
+	   O.points as points,
+	   L.xf_balance returnLevel1Money,
+	   L1.xf_balance returnLevel2Money
+       FROM xf_log T
+	   INNER JOIN commodity_order O  ON T.order_id=O.id
+	   LEFT JOIN xf_log L ON T.order_id=L.order_id AND L.xf_classify='VIP_SHARING'
+	   LEFT JOIN xf_log L1 ON T.order_id=L1.order_id AND L1.xf_classify='VIP_JICHA_SHARING'
+       where 1=1 and
+	   T.xf_classify in ('DISCOUNT','DISCOUNT_REFUND')
+        and T.user_id = #{params.uid}
+    </select>
+
+
+    <select id="teamYjPage" resultType="com.xyhc.cms.vo.commodity.OrderTjVo">
+       SELECT O.id as orderNo,
+       O.pay_time as payTime,
+       O.price as salesPrice ,
+       O.commodity_total as vipPrice,
+       O.discount as deducBuyPrice,
+       O.total as payMoney,
+	   O.points as points,
+	   L.xf_balance returnLevel1Money,
+	   L1.xf_balance returnLevel2Money,
+	   O.pay_time as payTime,
+	   W.nick_name as nickName
+       FROM commodity_order O
+        INNER JOIN wechat W on W.id=O.uid
+       INNER JOIN(
+
+
+        SELECT DISTINCT W.id,W.id as pid,M.pay_time
+        FROM wechat W
+        INNER JOIN member_level_order M on W.id=M.uid and M.is_pay=1 and M.is_delete=0
+        INNER JOIN member_level L on L.id=M.level_id
+        WHERE 1=1 AND W.id='${params.uid}'
+
+	    UNION
+         SELECT W1.id,W.id as pid,M.pay_time
+        FROM  wechat W
+        INNER JOIN member_level_order M on W.id=M.uid and M.is_pay=1 and M.is_delete=0
+        INNER JOIN member_level L on L.id=M.level_id
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        WHERE 1=1 AND W.id='${params.uid}'
+
+        UNION
+        SELECT W2.id,W.id as pid,M.pay_time
+        FROM  wechat W
+        INNER JOIN member_level_order M on W.id=M.uid and M.is_pay=1 and M.is_delete=0
+        INNER JOIN member_level L on L.id=M.level_id
+        INNER JOIN wechat W1 ON W.id=W1.parent_id
+        INNER JOIN wechat W2 ON W1.id=W2.parent_id
+        WHERE 1=1 AND W.id='${params.uid}'
+
+            )T1 ON O.uid=T1.id AND O.is_pay=1 AND O.pay_time>T1.pay_time  AND O.order_status!='REFUNDED'
+
+-- 	   INNER JOIN commodity_order O  ON T.order_id=O.id  AND T1.id=O.uid AND O.is_pay=1 AND O.pay_time>T1.pay_time
+	 	   LEFT JOIN xf_log L ON O.id=L.order_id AND L.xf_classify='VIP_SHARING'
+	   LEFT JOIN xf_log L1 ON O.id=L1.order_id AND L1.xf_classify='VIP_JICHA_SHARING'
+       WHERE 1=1
+
+    </select>
+
+
+    <select id="userDetailPage" resultType="com.xyhc.cms.vo.commodity.OrderTjVo">
+       SELECT O.id as orderNo,
+       O.price as salesPrice ,
+       O.commodity_total as vipPrice,
+       T.xf_balance as deducBuyPrice,
+       O.total as payMoney,
+	   O.points as points,
+	   O.discount as discount,
+	   O.pay_time as payTime,
+	   O.order_status as orderStatus,
+	   L.xf_balance returnLevel1Money,
+	   L1.xf_balance returnLevel2Money,
+	   W.nick_name as nickName,
+	   W.avatar_url as avatarUrl,
+	   V.name as levelName
+       FROM xf_log T
+	   INNER JOIN commodity_order O  ON T.order_id=O.id
+	   LEFT JOIN xf_log L ON T.order_id=L.order_id AND L.xf_classify='VIP_SHARING'
+	   LEFT JOIN xf_log L1 ON T.order_id=L1.order_id AND L1.xf_classify='VIP_JICHA_SHARING'
+	   LEFT JOIN wechat W ON O.uid=W.id
+	   LEFT JOIN member_level_order M ON W.id=M.uid AND M.is_delete=0 AND M.is_pay=1
+	   LEFT JOIN member_level V ON V.id=M.level_id AND M.is_delete=0
+       where 1=1
+       and T.user_id = #{params.uid}
+       and T.xf_balance>0
+       and T.xf_classify in ('INVITE_REWARD','JOIN_MONEY','MEMBER_AWARD','VIP_JICHA_SHARING','VIP_SHARING')
+    </select>
+
+    <select id="balanceDetailByOrderId" resultType="com.xyhc.cms.entity.XfLogEntity">
+        SELECT T.*,
+        W.nick_name as nickName,
+        W.avatar_url as avatarUrl
+
+        FROM xf_log T
+        INNER  JOIN wechat W ON T.user_id=W.id
+        where 1=1 and T.is_delete=0
+       	and T.xf_classify in ('VIP_SHARING','VIP_JICHA_SHARING')
+        and T.order_id = #{params.orderId}
+    </select>
+
+
+    <select id="toReward" resultType="com.xyhc.cms.entity.XfLogEntity">
+      SELECT *from xf_log where xf_classify in ('JOIN_MONEY','INVITE_REWARD')
+      AND xf_account=0
+    </select>
+
+
+    <select id="balanceWithdrawnLogByUserId" resultType="com.xyhc.cms.entity.XfLogEntity">
+        SELECT *
+        FROM xf_log T
+        where 1=1 and is_delete=0
+        and T.xf_balance>0
+        and xf_account=1
+        and T.user_id = #{params.uid}
+        order by T.create_time desc
+    </select>
+
+    <select id="saveToReceivingMallTransfer" resultType="com.xyhc.cms.entity.XfLogEntity">
+      SELECT *from xf_log where 1=1
+      AND xf_account=1
+      ORDER  BY  create_Time
+    </select>
+
+    <select id="getFirst" resultType="com.xyhc.cms.entity.XfLogEntity">
+      SELECT *from xf_log where 1=1
+      AND xf_account=1
+      AND user_id= #{uid}
+      AND collected_balances >0
+      AND is_transfer=1
+      ORDER  BY  create_Time DESC
+    </select>
+
+</mapper>

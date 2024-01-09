@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.MsLotteryUserDao">
+
+
+    <select id="page" resultType="com.xyhc.cms.entity.MsLotteryUserEntity">
+        SELECT T.*,
+        P.title as title,
+        P.imgurl as imgurl,
+        P.num as num,
+        P.type as type
+        FROM ms_lottery_user T
+        INNER JOIN ms_lottery_info P on T.lottery_info_id = P.id
+        where 1=1 and T.is_delete=0 and P.is_delete=0
+        <if test="params.title!= null and params.title !=''">
+            and P.title like '%${params.title}%'
+        </if>
+        <if test="params.type!= null and params.type !=''">
+            and P.type = '${params.type}'
+        </if>
+        <if test="params.isReceive!= null and params.isReceive !=''">
+            and T.is_receive = '${params.isReceive}'
+        </if>
+        order by T.update_time desc
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.MsLotteryUserEntity">
+        SELECT *
+        FROM ms_lottery_user T
+        where 1=1 and is_delete=0
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+
+    </select>
+
+    <select id="userAll" resultType="com.xyhc.cms.entity.MsLotteryUserEntity">
+        SELECT *
+        FROM ms_lottery_user T
+        INNER JOIN ms_lottery_info P on T.lottery_info_id = P.id
+        where 1=1 and T.is_delete=0 and P.is_delete=0
+
+        <if test="params.uid!= null and params.uid !=''">
+            and T.uid = '${params.uid}'
+        </if>
+        ORDER BY T.create_time desc
+    </select>
+
+</mapper>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.CommodityCollectDao">
+
+
+    <select id="page" resultType="com.xyhc.cms.entity.CommodityCollectEntity">
+        SELECT  T.*,
+        C.commodity_name as commodityName,
+        C.commodity_main_imgurl as commodityMainImgurl,
+        C.price as price,
+        C.original_price as originalPrice
+        FROM commodity_collect T
+        left join commodity C on T.commodity_id=C.id
+        where 1=1 and T.is_delete=0 and C.is_delete=0
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+        <if test="params.uid!= null and params.uid !=''">
+            and T.uid = '${params.uid}'
+        </if>
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.CommodityCollectEntity">
+        SELECT *
+        FROM commodity_collect T
+        where 1=1 and is_delete=0
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+
+    </select>
+
+</mapper>

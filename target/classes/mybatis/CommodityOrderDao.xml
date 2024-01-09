@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.CommodityOrderDao">
+
+
+    <select id="page" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT T.*,
+        W.nick_name,
+        W.avatar_url,
+        L.name as levelType
+        FROM commodity_order T
+        INNER JOIN wechat W ON T.uid=W.id
+        LEFT JOIN wechat W1 ON W.parent_id=W1.id
+        LEFT JOIN wechat W2 ON W1.parent_id=W2.id
+        LEFT JOIN member_level L ON T.level_id=L.id
+        where 1=1 and T.is_delete=0
+        <if test="params.id!= null and params.id !=''">
+            and T.id = ${params.id}
+        </if>
+        <if test="params.receiveName!= null and params.receiveName !=''">
+            and T.receive_name like '%${params.receiveName}%'
+        </if>
+        <if test="params.receiveTell!= null and params.receiveTell !=''">
+            and T.receive_tell like '%${params.receiveTell}%'
+        </if>
+        <if test="params.uid!= null and params.uid !=''">
+            and T.uid like '%${params.uid}%'
+        </if>
+        <if test="params.orderStatus!= null and params.orderStatus !=''">
+            <if test="params.orderStatus== 'TO_DELIVER'">
+                and (T.order_status= 'APPLY_REFUND' or T.order_status= 'TO_DELIVER')
+            </if>
+            <if test="params.orderStatus== 'TO_RECEIVE'">
+                and (T.order_status= 'APPLY_REFUND' or T.order_status= 'TO_RECEIVE')
+            </if>
+            <if test="params.orderStatus!= 'TO_DELIVER' and params.orderStatus!='TO_RECEIVE'">
+                and T.order_status= '${params.orderStatus}'
+            </if>
+            <if test="params.orderStatus== 'REFUNDED'">
+                and T.order_status= 'REFUNDED'
+            </if>
+        </if>
+        <if test="params.isPay!= null and params.isPay !=''">
+            and T.is_pay= ${params.isPay}
+        </if>
+
+        <if test="params.parentName!= null and params.parentName !=''">
+            and (W1.nick_name like '%${params.parentName}%' OR W2.nick_name like '%${params.parentName}%' )
+        </if>
+        <if test="params.startTime!= null and params.startTime !=''">
+            and T.pay_time >= #{params.startTime}
+        </if>
+        <if test="params.endTime!= null and params.endTime !=''">
+            and #{params.endTime} >= T.pay_time
+        </if>
+        <if test="params.levelType!= null and params.levelType !=''">
+            and L.level_type = '${params.levelType}'
+        </if>
+    </select>
+
+    <select id="pageCommon" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT *
+        FROM commodity_order T
+        where 1=1 and is_delete=0
+        <if test="params.receiveName!= null and params.receiveName !=''">
+            and T.receive_name like '%${params.receiveName}%'
+        </if>
+        <if test="params.userId!= null and params.userId !=''">
+            and T.user_id= '${params.userId}'
+        </if>
+        <if test="params.orderStatus!= null and params.orderStatus !=''">
+            <if test="params.orderStatus== 'TO_DELIVER'">
+                and (T.order_status= 'APPLY_REFUND' or T.order_status= 'TO_DELIVER' or T.order_status= 'REFUNDED')
+            </if>
+            <if test="params.orderStatus== 'TO_RECEIVE'">
+                and (T.order_status= 'APPLY_REFUND' or T.order_status= 'TO_RECEIVE' or T.order_status= 'REFUNDED')
+            </if>
+            <if test="params.orderStatus!= 'TO_DELIVER' and params.orderStatus!='TO_RECEIVE'">
+                and T.order_status= '${params.orderStatus}'
+            </if>
+        </if>
+        <if test="params.isPay!= null and params.isPay !=''">
+            and T.is_pay= ${params.isPay}
+        </if>
+    </select>
+
+    <select id="pageEntire" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT T.*,
+        W.nick_name,
+        W.avatar_url,
+        L.name as levelType
+        FROM commodity_order T
+        INNER JOIN wechat W ON T.uid=W.id
+        LEFT JOIN member_level_order M ON W.id=M.uid AND M.is_pay=1 and M.is_delete=0
+        LEFT JOIN member_level L ON M.level_id=L.id
+        where 1=1 and T.is_delete=0
+        <if test="params.receiveName!= null and params.receiveName !=''">
+            and T.receive_name like '%${params.receiveName}%'
+        </if>
+        <if test="params.nickName!= null and params.nickName !=''">
+            and W.nick_name like '%${params.nickName}%'
+        </if>
+
+        <if test="params.levelType!= null and params.levelType !=''">
+            and L.level_type = '${params.levelType}'
+        </if>
+
+        <if test="params.isPay!= null and params.isPay !=''">
+            and T.is_pay like '%${params.isPay}%'
+        </if>
+        <if test="params.orderStatus!= null and params.orderStatus !=''">
+            and T.order_status like '%${params.orderStatus}%'
+        </if>
+
+        <if test="params.startTime!= null and params.startTime !=''">
+            and T.pay_time >= #{params.startTime}
+        </if>
+        <if test="params.endTime!= null and params.endTime !=''">
+            and #{params.endTime} >= T.pay_time
+        </if>
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT *
+        FROM commodity_order T
+        where 1=1 and is_delete=0
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+    </select>
+
+    <select id="allByUid" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT *
+        FROM commodity_order T
+        where 1=1 and is_delete=0 and is_pay=1
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+        <if test="params.uid!= null and params.uid !=''">
+            and T.uid= '${params.uid}'
+        </if>
+    </select>
+
+    <select id="allExport" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT T.*,
+        W.nick_name,
+        W.avatar_url,
+        L.name as levelType
+        FROM commodity_order T
+        INNER JOIN wechat W ON T.uid=W.id
+        LEFT JOIN wechat W1 ON W.parent_id=W1.id
+        LEFT JOIN wechat W2 ON W1.parent_id=W2.id
+        LEFT JOIN member_level_order M ON W.id=M.uid AND M.is_pay=1 and M.is_delete=0
+        LEFT JOIN member_level L ON M.level_id=L.id
+        where 1=1 and T.is_delete=0
+        <if test="params.id!= null and params.id !=''">
+            and T.id = ${params.id}
+        </if>
+        <if test="params.receiveName!= null and params.receiveName !=''">
+            and T.receive_name like '%${params.receiveName}%'
+        </if>
+        <if test="params.receiveTell!= null and params.receiveTell !=''">
+            and T.receive_tell like '%${params.receiveTell}%'
+        </if>
+        <if test="params.uid!= null and params.uid !=''">
+            and T.uid like '%${params.uid}%'
+        </if>
+        <if test="params.orderStatus!= null and params.orderStatus !=''">
+            <if test="params.orderStatus== 'TO_DELIVER'">
+                and (T.order_status= 'APPLY_REFUND' or T.order_status= 'TO_DELIVER')
+            </if>
+            <if test="params.orderStatus== 'TO_RECEIVE'">
+                and (T.order_status= 'APPLY_REFUND' or T.order_status= 'TO_RECEIVE')
+            </if>
+            <if test="params.orderStatus!= 'TO_DELIVER' and params.orderStatus!='TO_RECEIVE'">
+                and T.order_status= '${params.orderStatus}'
+            </if>
+            <if test="params.orderStatus== 'REFUNDED'">
+                and T.order_status= 'REFUNDED'
+            </if>
+        </if>
+        <if test="params.isPay!= null and params.isPay !=''">
+            and T.is_pay= ${params.isPay}
+        </if>
+
+        <if test="params.parentName!= null and params.parentName !=''">
+            and (W1.nick_name like '%${params.parentName}%' OR W2.nick_name like '%${params.parentName}%' )
+        </if>
+        <if test="params.startTime!= null and params.startTime !=''">
+            and T.pay_time >= #{params.startTime}
+        </if>
+        <if test="params.endTime!= null and params.endTime !=''">
+            and #{params.endTime} >= T.pay_time
+        </if>
+        <if test="params.levelType!= null and params.levelType !=''">
+            and L.level_type = '${params.levelType}'
+        </if>
+        GROUP BY T.create_time
+    </select>
+
+    <select id="pageRefund" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT *
+        FROM commodity_order T
+        where 1=1 and is_delete=0 and approve_status in('TO_APPROVE','REJECT','PASS')
+        <if test="params.receiveName!= null and params.receiveName !=''">
+            and T.receive_name like '%${params.receiveName}%'
+        </if>
+    </select>
+
+    <select id="oneDayBeforeOrder" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        	SELECT T.*
+        FROM commodity_order T
+        where 1=1 and T.is_delete=0
+				 and T.order_status='RECEIVED'
+				 and T.is_return_points=0
+        and DATE_SUB(now(), INTERVAL 1 DAY)>T.update_time
+    </select>
+
+    <select id="sevenDayBeforeOrder" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+       SELECT T.*
+        FROM commodity_order T
+        where 1=1 and T.is_delete=0
+        and T.order_status='TO_RECEIVE'
+        and DATE_SUB(CURDATE(), INTERVAL 7 DAY) > T.pay_time
+    </select>
+
+    <select id="sevenDayPointsOrder" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT T.*
+        FROM commodity_order T
+        where 1=1 and T.is_delete=0
+        and T.order_status='RECEIVED' and T.is_return_points=0
+        and DATE_SUB(CURDATE(), INTERVAL 7 DAY) > T.pay_time
+    </select>
+
+    <select id="orderNoIsPay" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT T.*
+        FROM commodity_order T
+        where 1=1 and T.is_delete=0
+        and T.is_pay=0 and T.uid= #{uid}
+    </select>
+
+    <select id="orderToDeliverNum" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT T.*
+        FROM commodity_order T
+        where 1=1 and T.is_delete=0 and T.uid= #{uid}
+        and T.is_pay=1 and T.order_status='TO_DELIVER'
+    </select>
+
+    <select id="orderToReceiveNum" resultType="com.xyhc.cms.entity.CommodityOrderEntity">
+        SELECT T.*
+        FROM commodity_order T
+        where 1=1 and T.is_delete=0 and T.uid= #{uid}
+        and T.is_pay=1 and T.order_status='TO_RECEIVE'
+    </select>
+
+</mapper>

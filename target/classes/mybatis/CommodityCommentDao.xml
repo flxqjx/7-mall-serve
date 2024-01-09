@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.CommodityCommentDao">
+
+
+    <select id="page" resultType="com.xyhc.cms.entity.CommodityCommentEntity">
+        SELECT T.*,
+        D.commodity_name,
+        D.commodity_main_imgurl,
+        S.spec_imgurl
+        FROM commodity_comment T
+        LEFT JOIN commodity_order_commodity C ON T.commodity_order_commodity_id=C.id
+        LEFT JOIN commodity D ON T.commodity_id=D.id
+        LEFT JOIN commodity_spec S ON C.spec_id=S.id
+        where 1=1 and T.is_delete=0
+        <if test="params.commodityName!= null and params.commodityName !=''">
+            and D.commodity_name like '%${params.commodityName}%'
+        </if>
+        <if test="params.orderId!= null and params.orderId !=''">
+            and T.order_id = '${params.orderId}'
+        </if>
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.CommodityCommentEntity">
+        SELECT *
+        FROM commodity_comment T
+        where 1=1 and is_delete=0
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+
+    </select>
+
+    <select id="commentsIsReply" resultType="com.xyhc.cms.entity.CommodityCommentEntity">
+        SELECT *
+        FROM commodity_comment T
+        where 1=1 and is_delete=0
+        <if test="params.commodityId!= null and params.commodityId !=''">
+            and T.commodity_id like '%${params.commodityId}%'
+        </if>
+    </select>
+
+</mapper>

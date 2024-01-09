@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xyhc.cms.dao.CommodityClassifyDao">
+
+
+    <select id="page" resultType="com.xyhc.cms.entity.CommodityClassifyEntity">
+        SELECT *
+        FROM commodity_classify T
+        where 1=1 and is_delete=0 and parent_id='0'
+        <if test="params.classifyName!= null and params.classifyName !=''">
+            and T.classify_name like '%${params.classifyName}%'
+        </if>
+        order by T.classify_sort asc
+    </select>
+
+    <select id="all" resultType="com.xyhc.cms.entity.CommodityClassifyEntity">
+        SELECT *
+        FROM commodity_classify T
+        where 1=1 and is_delete=0
+        <if test="params.name!= null and params.name !=''">
+            and T.name like '%${params.name}%'
+        </if>
+        order by T.classify_sort asc
+    </select>
+
+    <select id="lastLevelAll" resultType="com.xyhc.cms.entity.CommodityClassifyEntity">
+        SELECT *
+        FROM commodity_classify T
+        where 1=1 and is_delete=0
+        <if test="params.classifyId!= null and params.classifyId !=''">
+            and T.parent_id like '%${params.classifyId}%'
+        </if>
+        order by T.classify_sort asc
+    </select>
+
+</mapper>
